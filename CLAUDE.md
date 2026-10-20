@@ -6,9 +6,34 @@ CP437 glyphs as sprites in a Bevy window with a CRT shader; the port keeps
 the game and puts the glyphs in the terminal, the way the Armoured
 Commander ports keep theirs.
 
-Status: started 2026-10-20. The whole game is ported: the ten bosses and
-their patterns, the player, the HUD and the five menus (main, pause, game
-over, level completed, won). Keyboard, mouse in the menus and gamepad.
+Status: started 2026-10-20 as a straight port (the whole original: ten
+bosses, the player, the HUD, the five menus). The original is a thin game
+(static bosses, rings and aimed shots, white dots), so the same day it
+grew into a fuller one around it, the original kept as Classic mode:
+
+- Arcade (ten bosses in a row, one score), Practice (any boss reached,
+  best times) and Classic (the original, rule for rule).
+- Every boss redesigned in three or four phases (`bosses.rs` `ARCADE`),
+  each opening with its classic attack, then moving (sway, hop, chase) and
+  adding fans, bursts, rain, walls with gaps, curving, accelerating,
+  bouncing and homing shots, and lasers (dotted warning, then a burning
+  beam, aimed or sweeping). Phase names shown as banners.
+- Player: blink of safety after a hit (by difficulty), focus (slow moves,
+  hit cell shown), bombs (shock wave clears shots, 3 per game, carried
+  over), grazing (points and a bomb every 80), health carried between
+  Arcade bosses with 4 back.
+- Score: hits, grazes, cancelled shots, phase bonuses (clean phase +3000),
+  speed, no-hit and no-bomb bonuses; Easy x0.5, Normal x1, Hard x1.5.
+- Look: colour per boss, multi-cell boss art, stars, sparks, explosions,
+  shake, red flash on a hit, boss health bar with phase pips, title logo.
+- Sound (`audio.rs`, synthesised effects) and music (`music.rs`, a
+  chiptune per boss and the title, intensity rising through the fight).
+- Options (difficulty, sound, music, shake) and records in a save file;
+  attract demo after 20 s on the title, `--demo` for the preview.
+- `bot.rs`: a greedy dodger; 2026-10-20 it beat all ten bosses on every
+  difficulty, so the fights can be won (humans will find them harder).
+
+Keyboard, mouse in the menus and gamepad (an Xbox 360 pad is picked up).
 Not yet: release workflow, preview cast, hub entry.
 
 ## Source and licence
@@ -30,15 +55,18 @@ a frame assumed about that). Positions stay in the original's pixels: a
 1260x787.5 window (1680x1050 at scale 0.75), y up, so every speed, rate
 and hit size carries over unchanged.
 
-- `src/bosses.rs`: the ten bosses (glyph, name, patterns) from `enemies.rs`.
-- `src/game.rs`: `game.rs`, `player.rs`, `shoot.rs` and the pattern systems.
-- `src/render.rs`: field, HUD and menus.
+- `src/bosses.rs`: `CLASSIC`, the original's ten from `enemies.rs`, and
+  `ARCADE`, ours.
+- `src/game.rs`: the rules; `update_classic` is the original's `game.rs`,
+  `player.rs`, `shoot.rs` and pattern systems, `update_arcade` ours.
+- `src/render.rs`: field, HUD, panels, logo. `src/main.rs`: screens and
+  menus. `src/save.rs`, `src/audio.rs`, `src/music.rs`, `src/bot.rs`.
 - `src/input.rs`: held keys and the gamepad, taken over from Ceres.
-- `src/tests.rs`: rules checked against the original's numbers; `cargo
-  test --release -- --ignored --nocapture bot_report` runs a greedy dodger
-  against every boss (2026-10-20: it beats 1 to 9 and dies on 10).
+- `src/tests.rs`: classic rules checked against the original's numbers,
+  arcade rules; `cargo test --release -- --ignored --nocapture
+  bot_report` runs the bot against every boss on every difficulty.
 
-Kept from the original, quirks included:
+Kept from the original in Classic, quirks included:
 
 - The player fires one bullet a frame at the boss while moving, never
   while standing still. Player: 10 health, 2 per hit, dies when health goes
@@ -67,7 +95,7 @@ Changed, and why:
 - The HUD is a line above the field instead of on top of it, and shows the
   boss's name (the names are the original's, from its source comments).
 - Esc also leaves the pause menu; menus work with keys and the gamepad,
-  not only the mouse.
+  not only the mouse. Classic has music (the original has no sound).
 - The player's '>' turns in four steps (the sprite turned freely).
 - No CRT shader or chromatic aberration.
 
@@ -81,6 +109,8 @@ below the HUD line. At 100x30 that is 93x29. Smallest: 40x13.
 
 ```bash
 cargo run --release              # play
-cargo run --release -- --level 7 # start at boss 7
+cargo run --release -- --level 7 # Arcade from boss 7
+cargo run --release -- --classic # the original
+cargo run --release -- --demo    # the computer plays
 cargo test
 ```

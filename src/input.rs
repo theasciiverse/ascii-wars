@@ -1,15 +1,19 @@
 //! Keyboard and gamepad (taken over from Ceres).
 //!
 //! - Move: arrow keys or WASD, the d-pad or the left stick. Moving fires.
-//! - Esc or P, pad Start: pause.
-//! - Menus: up and down to choose, Enter, Space or pad A to press.
+//! - Focus (slow, careful moves): hold Shift (with the kitty protocol), Z
+//!   or J; pad A, or a shoulder button.
+//! - Bomb: X, K or Space; pad B or Y.
+//! - Esc or P, pad Start: pause. M: sound on and off.
+//! - Menus: up and down to choose, left and right to change a setting,
+//!   Enter or pad A to press.
 //!
 //! The original reads held keys every frame. With the kitty keyboard
 //! protocol presses and releases are exact. Without it the terminal only
 //! sends key repeats, and a key counts as held while they keep arriving:
 //! playable, but a move goes on a little after the key is let go.
 
-use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
+use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyModifiers, ModifierKeyCode};
 use std::time::{Duration, Instant};
 
 const PRE_REPEAT: Duration = Duration::from_millis(500);
@@ -21,14 +25,21 @@ const LEFT: usize = 0;
 const RIGHT: usize = 1;
 const UP: usize = 2;
 const DOWN: usize = 3;
+const FOCUS: usize = 4;
+const KEYS: usize = 5;
 
 /// Commands, as edges.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Cmd {
     Pause,
     Confirm,
+    Back,
     Up,
     Down,
+    Left,
+    Right,
+    Bomb,
+    Mute,
     Exit,
 }
 
@@ -48,26 +59,26 @@ fn usable_pad(p: &gilrs::Gamepad) -> bool {
 
 pub struct Input {
     pub exact: bool,
-    keys: [Key; 4],
+    keys: [Key; KEYS],
     pub cmds: Vec<Cmd>,
     #[cfg(feature = "gamepad")]
     gilrs: Option<gilrs::Gilrs>,
     pub pad_name: Option<String>,
-    pad: [bool; 4],
-    pad_latched: [bool; 4],
+    pad: [bool; KEYS],
+    pad_latched: [bool; KEYS],
 }
 
 impl Input {
     pub fn new(exact: bool) -> Input {
         Input {
             exact,
-            keys: [Key::default(); 4],
+            keys: [Key::default(); KEYS],
             cmds: Vec::new(),
             #[cfg(feature = "gamepad")]
             gilrs: None,
             pad_name: None,
-            pad: [false; 4],
-            pad_latched: [false; 4],
+            pad: [false; KEYS],
+            pad_latched: [false; KEYS],
         }
     }
 
@@ -83,6 +94,8 @@ impl Input {
             KeyCode::Right | KeyCode::Char('d' | 'D') => Some(RIGHT),
             KeyCode::Up | KeyCode::Char('w' | 'W') => Some(UP),
             KeyCode::Down | KeyCode::Char('s' | 'S') => Some(DOWN),
+            KeyCode::Char('z' | 'Z' | 'j' | 'J') => Some(FOCUS),
+            KeyCode::Modifier(ModifierKeyCode::LeftShift | ModifierKeyCode::RightShift) => Some(FOCUS),
             _ => None,
         };
         if let Some(d) = dir {
@@ -110,6 +123,8 @@ impl Input {
         match dir {
             Some(UP) => self.cmds.push(Cmd::Up),
             Some(DOWN) => self.cmds.push(Cmd::Down),
+            Some(LEFT) => self.cmds.push(Cmd::Left),
+            Some(RIGHT) => self.cmds.push(Cmd::Right),
             _ => {}
         }
         if !fresh {
@@ -117,7 +132,14 @@ impl Input {
         }
         match k.code {
             KeyCode::Esc | KeyCode::Char('p' | 'P') => self.cmds.push(Cmd::Pause),
-            KeyCode::Enter | KeyCode::Char(' ') => self.cmds.push(Cmd::Confirm),
+            KeyCode::Backspace => self.cmds.push(Cmd::Back),
+            KeyCode::Enter => self.cmds.push(Cmd::Confirm),
+            KeyCode::Char(' ') => {
+                self.cmds.push(Cmd::Confirm);
+                self.cmds.push(Cmd::Bomb);
+            }
+            KeyCode::Char('x' | 'X' | 'k' | 'K') => self.cmds.push(Cmd::Bomb),
+            KeyCode::Char('m' | 'M') => self.cmds.push(Cmd::Mute),
             _ => {}
         }
     }
@@ -172,7 +194,12 @@ impl Input {
                     EventType::ButtonPressed(b, _) => {
                         log::debug!("pad press {b:?}");
                         match b {
-                            Button::South | Button::East => self.cmds.push(Cmd::Confirm),
+                            Button::South => self.cmds.push(Cmd::Confirm),
+                            Button::East => {
+                                self.cmds.push(Cmd::Bomb);
+                                self.cmds.push(Cmd::Back);
+                            }
+                            Button::North => self.cmds.push(Cmd::Bomb),
                             Button::Start | Button::Select => self.cmds.push(Cmd::Pause),
                             _ => {}
                         }
@@ -188,13 +215,16 @@ impl Input {
                     on(Button::DPadRight) || sx > STICK,
                     on(Button::DPadUp) || sy > STICK,
                     on(Button::DPadDown) || sy < -STICK,
+                    on(Button::South) || on(Button::LeftTrigger) || on(Button::RightTrigger) || on(Button::LeftTrigger2) || on(Button::RightTrigger2),
                 ];
-                for d in 0..4 {
+                for d in 0..KEYS {
                     if now[d] && !self.pad[d] {
                         self.pad_latched[d] = true;
                         match d {
                             UP => self.cmds.push(Cmd::Up),
                             DOWN => self.cmds.push(Cmd::Down),
+                            LEFT => self.cmds.push(Cmd::Left),
+                            RIGHT => self.cmds.push(Cmd::Right),
                             _ => {}
                         }
                     }
@@ -205,9 +235,9 @@ impl Input {
     }
 
     /// The held direction for this frame, each axis -1, 0 or 1 (y up, as
-    /// in the original). Clears the latches.
-    pub fn direction(&mut self, now: Instant) -> (i8, i8) {
-        let mut held = [false; 4];
+    /// in the original), and whether focus is held. Clears the latches.
+    pub fn direction(&mut self, now: Instant) -> ((i8, i8), bool) {
+        let mut held = [false; KEYS];
         for (d, h) in held.iter_mut().enumerate() {
             let k = &mut self.keys[d];
             let down = if self.exact { k.down } else { held_by_repeat(k, now) };
@@ -224,7 +254,7 @@ impl Input {
         } else {
             0
         };
-        (x, y)
+        ((x, y), held[FOCUS])
     }
 }
 
