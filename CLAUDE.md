@@ -34,7 +34,12 @@ grew into a fuller one around it, the original kept as Classic mode:
   difficulty, so the fights can be won (humans will find them harder).
 
 Keyboard, mouse in the menus and gamepad (an Xbox 360 pad is picked up).
-Not yet: release workflow, preview cast, hub entry.
+On the website mockup since 2026-10-20: `hub/catalog/ascii-wars.toml` and
+`.md`, preview `asciiverse/ascii-wars.cast` (100x30, `ascii-wars --demo
+--level 8 --seed 4` through hub's `castrec.py`, best of eight takes; still
+at 36 s, the Supernova ring), local Linux build in the website's
+`dev-releases/ascii-wars` (1.0.0-av.1, links libasound and libudev).
+Not yet: release workflow, GitHub repo.
 
 ## Source and licence
 

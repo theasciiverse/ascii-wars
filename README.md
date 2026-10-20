@@ -41,6 +41,26 @@ little after the key is let go.
 Settings and records: `$XDG_DATA_HOME/ascii-wars/save.txt`
 (`%APPDATA%` on Windows). Session log: `RUST_LOG=debug ascii-wars 2>ascii-wars.log`.
 
+## What this edition changes
+
+Arcade and Practice are new: phases, moving bosses and their new attacks,
+focus, bombs, grazing, the blink after a hit, the score, colour, sound and
+music. Arcade also fires every fourth frame for four times the damage
+(the original fires every frame), so the screen is not crossed by a solid
+line of shots.
+
+Classic is the original game, rule for rule (speeds, fire rates, health,
+its timers and quirks), at a fixed 60 frames a second in the original's
+window coordinates, with these differences:
+
+- The player is hit by a shot drawn in, or passing through, the player's
+  cell: terminal cells are taller than the original's hit circle, so its
+  own test could hit from the next cell or miss a shot drawn on top.
+- The HUD sits on a line above the field and names the boss.
+- Menus work with keys and gamepad as well as the mouse; Esc also leaves
+  the pause menu; music plays (the original is silent).
+- The ship's '>' turns in four steps; no CRT shader.
+
 ## Licence
 
 MIT, as the original; see `LICENSE`.

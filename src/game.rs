@@ -32,6 +32,7 @@ pub const MAX_LEVEL: i32 = 10;
 const MAX_BOMBS: i32 = 5;
 pub const GRAZES_PER_BOMB: u32 = 80;
 const MAX_PARTICLES: usize = 900;
+const ARCADE_FIRE_EVERY: u64 = 4;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub struct Vec2 {
@@ -807,10 +808,14 @@ impl Game {
         if let Some(boss) = &self.boss {
             player.facing = boss.pos.sub(player.pos).normalize_or(Vec2::new(0., 1.));
         }
-        if moving && can_fire {
-            let b = bullet(player.pos, player.facing, PLAYER_BULLET_SPEED, player.pool.damage, 1.0, '*', (255, 235, 140), true);
+        // the original fires every frame for 2; Arcade fires every fourth
+        // frame for 8, the same damage a second without a solid line of
+        // shots across the screen
+        if moving && can_fire && self.frames % ARCADE_FIRE_EVERY == 0 {
+            let damage = player.pool.damage * ARCADE_FIRE_EVERY as f32;
+            let b = bullet(player.pos, player.facing, PLAYER_BULLET_SPEED, damage, 1.0, '*', (255, 235, 140), true);
             self.bullets.push(b);
-            if self.frames % 6 == 0 {
+            if self.frames % (ARCADE_FIRE_EVERY * 2) == 0 {
                 self.events.push(Sound::Shot);
             }
         }
@@ -1149,6 +1154,7 @@ impl Game {
         let inside = |c: (i32, i32)| c.0 >= x && c.0 < x + w && c.1 >= y && c.1 < y + h;
         let invuln = self.boss.as_ref().is_some_and(|b| b.invuln > 0.);
         let mut hits = 0;
+        let mut damage = 0.;
         let mut spark_at = Vec::new();
         self.bullets.retain(|b| {
             if !b.from_player || !grid.sweep(b.prev, b.pos, inside) {
@@ -1156,9 +1162,8 @@ impl Game {
             }
             if !invuln {
                 hits += 1;
-                if hits % 4 == 1 {
-                    spark_at.push(b.pos);
-                }
+                damage += b.damage;
+                spark_at.push(b.pos);
             }
             false
         });
@@ -1170,12 +1175,10 @@ impl Game {
             self.spark(s, color);
         }
         let boss = self.boss.as_mut().unwrap();
-        boss.pool.health -= 2. * hits as f32;
+        boss.pool.health -= damage;
         boss.flash = 2;
-        self.add_score(10. * hits as f32);
-        if self.frames % 5 == 0 {
-            self.events.push(Sound::BossHit);
-        }
+        self.add_score(5. * damage);
+        self.events.push(Sound::BossHit);
         if self.boss.as_ref().unwrap().pool.health <= 0. {
             self.boss_phase_down();
         }

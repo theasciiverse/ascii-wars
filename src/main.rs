@@ -343,8 +343,8 @@ fn run(terminal: &mut ratatui::DefaultTerminal, game: &mut Game, input: &mut Inp
         }
 
         let mut footer: Vec<&str> = Vec::new();
-        if app.demo {
-            footer.push(if app.demo_only { "DEMO" } else { "DEMO   press any key" });
+        if app.demo && !app.demo_only {
+            footer.push("DEMO   press any key");
         } else if app.screen == Screen::Title {
             footer.push("move: arrows/WASD (moving fires)   focus: Shift/Z   bomb: X   pause: Esc   sound: M");
             if !app.exact_keys && input.pad_name.is_none() {

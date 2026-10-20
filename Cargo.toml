@@ -1,6 +1,6 @@
 [package]
 name = "ascii-wars"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2024"
 rust-version = "1.88"
 description = "ASCII Wars!, the boss rush bullet hell, ported to the terminal for the Asciiverse catalog"

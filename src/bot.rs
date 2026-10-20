@@ -71,6 +71,7 @@ pub fn choose(g: &Game, grid: Grid) -> Choice {
                 score -= 1.5;
             }
             score -= (q.y - FIELD_H * 0.2).abs() / FIELD_H;
+            score -= (q.x - FIELD_W / 2.).abs() / FIELD_W * 1.2;
             if m != (0, 0) {
                 score += 0.4;
             }
