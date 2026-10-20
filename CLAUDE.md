@@ -39,7 +39,7 @@ On the website mockup since 2026-10-20: `hub/catalog/ascii-wars.toml` and
 --level 8 --seed 4` through hub's `castrec.py`, best of eight takes; still
 at 36 s, the Supernova ring), local Linux build in the website's
 `dev-releases/ascii-wars` (1.0.0-av.1, links libasound and libudev).
-Not yet: release workflow, GitHub repo.
+Private at github.com/theasciiverse/ascii-wars (pushed 2026-10-20), Alvarz/ascii-wars as `upstream`. Not yet: release workflow.
 
 ## Source and licence
 
