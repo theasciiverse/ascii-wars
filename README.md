@@ -1,3 +1,16 @@
+> **Play it with Asciiverse.** With [av](https://asciiverse.sh), the Asciiverse
+> client:
+>
+> ```
+> av install ascii-wars
+> av play ascii-wars
+> ```
+>
+> Or download the archive for your system from this repository's Releases,
+> unpack it and run `./ascii-wars` (`ascii-wars.exe` on Windows).
+>
+> The original README follows.
+
 # ASCII Wars!
 
 A boss rush bullet hell in ASCII: ten bosses, one after another. You fire
