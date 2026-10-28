@@ -38,13 +38,13 @@ On the website mockup since 2026-10-20: `hub/catalog/ascii-wars.toml` and
 `.md`, preview `asciiverse/ascii-wars.cast` (100x30, `ascii-wars --demo
 --level 8 --seed 4` through hub's `castrec.py`, best of eight takes; still
 at 36 s, the Supernova ring), local Linux build in the website's
-`dev-releases/ascii-wars` (1.0.0-av.1, links libasound and libudev).
+`dev-releases/ascii-wars` (1.0.0, links libasound and libudev).
 Private at github.com/theasciiverse/ascii-wars (pushed 2026-10-20), Alvarz/ascii-wars as `upstream`. Release workflow `.github/workflows/release.yml` (2026-10-20), on the
 pattern of Armoured Commander II's: glibc Linux on Ubuntu 22.04 (x86_64,
 aarch64; libasound and libudev linked dynamically, declared as
 system_deps), macOS and Windows (MSVC), x86_64 and ARM64 each; archives
 `ascii-wars-<target>` with the binary, README.md and LICENSE. Tags
-`v<version>-av.<n>`; `v1.0.0-av.1` pushed, its run waiting on the
+`v<version>`; `v1.0.0` pushed (2026-10-28), its run waiting on the
 organisation's Actions billing. macOS and Windows are not built locally
 (no rustup here), so the first run is their first build.
 
