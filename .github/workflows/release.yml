@@ -3,7 +3,7 @@
 # SHA256SUMS file, attached to a GitHub release (hub/catalog/SCHEMA.md,
 # release.source = "github").
 #
-# On the pattern of Armoured Commander II's. Tags look like v1.0.0-av.1.
+# On the pattern of Armoured Commander II's. Tags look like v1.0.0.
 # Linux builds are glibc, not static musl: sound goes through rodio's ALSA
 # output and gamepads through gilrs and udev, both linked dynamically, so
 # the binary needs libasound2 and libudev1 (the manifest's system_deps).
@@ -15,7 +15,7 @@ name: release
 
 on:
   push:
-    tags: ["*-av.*"]
+    tags: ["v*"]
   workflow_dispatch:
     inputs:
       tag:
